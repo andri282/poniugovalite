@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rekap PO Motor Bekas PT - Target 300 Unit</title>
+  <meta name="description" content="Sistem rekapitulasi pre-order (PO) motor listrik bekas PT. Pantau progres unit terkumpul, sisa target, dan daftar pemesan secara real-time.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="#" class="nav-brand">
+        <div class="brand-icon-box">🛵</div>
+        <div class="brand-text">
+          <h1>PO MOTOR BEKAS PT <span class="brand-badge">LIVE REKAP</span></h1>
+          <span class="brand-subtitle">Take All Target: 300 Unit | Controller Unlock 60V</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <div id="syncStatusBtn" class="sync-indicator" title="Status Sinkronisasi Google Sheets">
+          <span id="syncDot" class="sync-dot offline"></span>
+          <span id="syncText">Memeriksa Database...</span>
+        </div>
+
+        <button id="btnOpenOrderModal" class="btn btn-primary">
+          <span>➕</span> Ikut PO Sekarang
+        </button>
+
+        <button id="btnShareWA" class="btn btn-outline-wa" title="Salin Rekap untuk WhatsApp Group">
+          <span>📲</span> Salin Rekap WA
+        </button>
+
+        <button id="btnOpenSettings" class="btn btn-secondary btn-icon-only" title="Pengaturan & Google Sheets">
+          ⚙️
+        </button>
+
+        <button id="btnOpenAdmin" class="btn btn-secondary btn-icon-only" title="Mode Admin">
+          🛡️
+        </button>
+
+        <span id="adminModeBadge" class="brand-badge" style="display: none; background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4);">
+          ADMIN AKTIF
+        </span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero & Real-time Progress Section -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-banner">
+        <div class="hero-top-row">
+          <div class="hero-title-area">
+            <h2>Rekapitulasi Pre-Order Motor Bekas PT</h2>
+            <p>Target wajib take all: <strong>300 Unit</strong> • SS Lengkap • Siap pasang baterai 60V</p>
+          </div>
+          <div class="target-badge-pill">
+            <span>🎯</span> TARGET TAKE ALL: 300 UNIT
+          </div>
+        </div>
+
+        <!-- Big Progress Bar -->
+        <div class="progress-container">
+          <div class="progress-header">
+            <div class="progress-labels">
+              <span id="statCurrentUnits" class="current-units">168</span>
+              <span id="statTargetUnits" class="target-units">/ 300 Unit</span>
+            </div>
+            <div id="statProgressPct" class="progress-pct-badge">56%</div>
+          </div>
+          <div class="progress-track">
+            <div id="statProgressFill" class="progress-fill" style="width: 56%;"></div>
+          </div>
+          <div class="progress-footer">
+            <span>Terpenuhi dari target minimal</span>
+            <span class="sisa-highlight">Sisa <strong id="statSisaUnitsProgress">132 Unit</strong> lagi menuju kuota!</span>
+          </div>
+        </div>
+
+        <!-- Key Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon green">👥</div>
+            <div class="stat-info">
+              <div class="stat-label">Jumlah Pemesan</div>
+              <div id="statTotalPemesan" class="stat-value">137 Orang</div>
+              <div class="stat-sub">Terdata dalam sistem</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon amber">⏳</div>
+            <div class="stat-info">
+              <div class="stat-label">Sisa Menuju Target</div>
+              <div id="statSisaUnitsCard" class="stat-value"><span id="statSisaUnits">132</span> Unit</div>
+              <div class="stat-sub">Wajib take all 300</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon blue">💰</div>
+            <div class="stat-info">
+              <div class="stat-label">Estimasi Nilai PO</div>
+              <div id="statTotalDana" class="stat-value">Rp 470.400.000</div>
+              <div class="stat-sub">Rp 2.800.000 / unit</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon purple">🚀</div>
+            <div class="stat-info">
+              <div class="stat-label">Akses Pendaftaran</div>
+              <div class="stat-value" style="font-size: 1.15rem; color: #a855f7;">Terbuka Umum</div>
+              <div class="stat-sub">Siapa saja bisa ikut PO</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Breakdown Pills -->
+        <div class="payment-summary-bar">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Status Bayar:</span>
+          
+          <div id="pillLunas" class="payment-pill lunas" title="Filter pesanan Lunas">
+            <span>✓ Lunas</span>
+            <span id="badgeLunasCount" class="badge-count">0 unit</span>
+          </div>
+
+          <div id="pillDp" class="payment-pill dp" title="Filter pesanan DP">
+            <span>⏳ DP / Sebagian</span>
+            <span id="badgeDpCount" class="badge-count">0 unit</span>
+          </div>
+
+          <div id="pillUnpaid" class="payment-pill unpaid" title="Filter pesanan Belum Bayar">
+            <span>⚠️ Belum Bayar</span>
+            <span id="badgeUnpaidCount" class="badge-count">0 unit</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Ketentuan PO Section -->
+  <section class="rules-section">
+    <div class="container">
+      <div class="rules-card">
+        <div class="rules-header">
+          <div class="rules-title">
+            <span>📌</span>
+            <h3>Ketentuan & Spesifikasi PO</h3>
+          </div>
+          <button id="btnOpenOrderModalRules" class="btn btn-primary btn-sm" onclick="document.getElementById('btnOpenOrderModal').click()">
+            Daftar Sekarang
+          </button>
+        </div>
+
+        <div class="rules-grid">
+          <div class="rule-item">
+            <div class="rule-icon">💰</div>
+            <div class="rule-item-content">
+              <h4>Harga Unit</h4>
+              <p><span class="highlight">Rp 2.800.000</span> / unit</p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-icon">🔋</div>
+            <div class="rule-item-content">
+              <h4>Kondisi Unit</h4>
+              <p>Motor only, <span class="highlight">tanpa baterai</span></p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-icon">📑</div>
+            <div class="rule-item-content">
+              <h4>Fisik & Legalitas</h4>
+              <p>Fisik unit random, <span class="highlight">SS Lengkap</span></p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-icon">⚡</div>
+            <div class="rule-item-content">
+              <h4>Controller & Kelistrikan</h4>
+              <p>Controller sudah unlock, <span class="highlight">tinggal pasang baterai 60V</span></p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-icon">🚚</div>
+            <div class="rule-item-content">
+              <h4>Pengiriman Luar Kota</h4>
+              <p>Pemilihan unit luar kota: <span class="highlight">+Rp 50.000</span> / unit</p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-icon">🎯</div>
+            <div class="rule-item-content">
+              <h4>Ketentuan Pengambilan</h4>
+              <p><span class="highlight">Target wajib take all: 300 unit</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Orders Table Section -->
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Section Toolbar -->
+      <div class="section-toolbar">
+        <div class="section-title-wrap">
+          <h3>Daftar Pemesan PO Terdaftar</h3>
+          <p id="tableInfo">Memuat data pemesan...</p>
+        </div>
+
+        <div class="toolbar-controls">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Cari nama, kota, nomor HP...">
+          </div>
+
+          <select id="statusFilterSelect" class="filter-select">
+            <option value="all">Semua Status Bayar</option>
+            <option value="lunas">Lunas</option>
+            <option value="dp">DP / Sebagian</option>
+            <option value="unpaid">Belum Bayar</option>
+          </select>
+
+          <button id="btnOpenImportModal" class="btn btn-secondary btn-sm" title="Impor Data Massal">
+            📋 Impor Teks
+          </button>
+
+          <button id="btnExportCSV" class="btn btn-secondary btn-sm" title="Unduh File CSV Excel">
+            📥 Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Orders Table Card -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="order-table">
+            <thead>
+              <tr>
+                <th style="width: 48px;">No</th>
+                <th>Nama Pemesan</th>
+                <th>Alamat / Kota</th>
+                <th>No. WhatsApp / HP</th>
+                <th>Jumlah Unit</th>
+                <th>Estimasi Total</th>
+                <th>Status Bayar</th>
+                <th style="width: 110px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="orderTableBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-icon">📭</div>
+          <h4>Tidak ada data yang cocok</h4>
+          <p>Coba ubah kata kunci pencarian atau filter status pembayaran.</p>
+        </div>
+
+        <!-- Table Footer & Pagination -->
+        <div class="table-footer">
+          <div>Klik status pembayaran (Mode Admin) atau nomor HP untuk langsung chat via WhatsApp.</div>
+          <div id="paginationWrap" class="pagination-controls">
+            <!-- Dynamic pagination -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL: Form Pendaftaran / Ikut PO -->
+  <div id="orderModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3><span>📝</span> Form Pendaftaran Ikut PO Motor</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <form id="orderForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="inputNama">Nama Lengkap <span class="required">*</span></label>
+            <input type="text" id="inputNama" class="form-input" placeholder="Contoh: Budi Santoso" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputNoHp">Nomor WhatsApp / HP Aktif <span class="required">*</span></label>
+            <input type="tel" id="inputNoHp" class="form-input" placeholder="Contoh: 081234567890" required>
+            <div class="form-helper">Nomor ini digunakan untuk konfirmasi unit dan koordinasi penyerahan.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputAlamat">Alamat Lengkap / Kota Pengiriman <span class="required">*</span></label>
+            <input type="text" id="inputAlamat" class="form-input" placeholder="Contoh: Bekasi, Jawa Barat" required>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-card">
+              <input type="checkbox" id="checkLuarKota">
+              <div>
+                <strong style="color: #ffffff; font-size: 0.9rem;">Pengiriman Luar Kota (+Rp 50.000 / unit)</strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Centang jika pengiriman ke luar area Jabodetabek.</div>
+              </div>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Jumlah Unit Motor Dipilih <span class="required">*</span></label>
+            <div class="unit-stepper">
+              <button type="button" id="btnUnitMinus" class="stepper-btn">-</button>
+              <input type="number" id="inputJumlahUnit" class="form-input" value="1" min="1" max="100" required>
+              <button type="button" id="btnUnitPlus" class="stepper-btn">+</button>
+              <span style="color: var(--text-muted); font-size: 0.9rem;">Unit</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputCatatan">Catatan / Request Khusus (Opsional)</label>
+            <input type="text" id="inputCatatan" class="form-input" placeholder="Contoh: Request warna putih, SS BPKB siap">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputStatusBayar">Status Pembayaran Awal</label>
+            <select id="inputStatusBayar" class="form-select">
+              <option value="Belum Bayar" selected>Belum Bayar (Menunggu Konfirmasi)</option>
+              <option value="DP">DP (Sudah Bayar Uang Muka)</option>
+              <option value="Lunas">Lunas (Sudah Bayar Penuh)</option>
+            </select>
+          </div>
+
+          <!-- Price Calculation Box -->
+          <div class="form-calc-box">
+            <div class="calc-row">
+              <span>Harga Satuan (Motor Only):</span>
+              <span id="calcBasePrice">1 × Rp 2.800.000 = Rp 2.800.000</span>
+            </div>
+            <div id="calcSurchargeRow" class="calc-row" style="display: none;">
+              <span>Biaya Luar Kota:</span>
+              <span id="calcSurchargePrice">1 × Rp 50.000 = Rp 50.000</span>
+            </div>
+            <div class="calc-row total">
+              <span>Total Estimasi Biaya:</span>
+              <span id="calcTotalPrice" class="total-price">Rp 2.800.000</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-modal-cancel">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <span>🚀</span> Simpan & Ikut PO
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Success Order & WhatsApp Confirmation -->
+  <div id="successModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 style="color: var(--primary);"><span>🎉</span> Pesanan Berhasil Dicatat!</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Data Anda telah berhasil dicatat ke dalam antrean PO Motor Bekas PT.
+        </p>
+
+        <div style="background: rgba(255, 255, 255, 0.04); border-radius: var(--radius-md); padding: 1rem; border: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
+          <div class="calc-row">
+            <span>Nama Pemesan:</span>
+            <strong id="successSummaryNama" style="color: #ffffff;">-</strong>
+          </div>
+          <div class="calc-row">
+            <span>Jumlah Unit:</span>
+            <strong id="successSummaryUnits" style="color: #ffffff;">-</strong>
+          </div>
+          <div class="calc-row total" style="margin-top: 0.5rem; padding-top: 0.5rem;">
+            <span>Total Tagihan:</span>
+            <strong id="successSummaryTotal" style="color: var(--primary); font-size: 1.2rem;">-</strong>
+          </div>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Langkah berikutnya: Silakan klik tombol di bawah untuk langsung terhubung dengan Admin via WhatsApp guna konfirmasi pembayaran rekening atau info penyerahan unit.
+        </p>
+
+        <a id="btnConfirmWhatsApp" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-wa" style="width: 100%; padding: 0.85rem; font-size: 1rem;">
+          <span>💬</span> Chat Admin & Konfirmasi di WhatsApp
+        </a>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-modal-cancel">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Settings & Google Sheets Sync -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3><span>⚙️</span> Pengaturan & Integrasi Google Sheets</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <form id="settingsForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="settingGasUrl">URL Google Apps Script (Web App /exec) <span class="required">*</span></label>
+            <input type="url" id="settingGasUrl" class="form-input mono" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+            <div class="form-helper">
+              Hubungkan ke Google Sheets Anda agar data tersimpan aman secara gratis di cloud Google. 
+              <a href="TUTORIAL_SETUP_GOOGLE_SHEETS.md" target="_blank" style="color: var(--primary); text-decoration: underline;">Baca Panduan Lengkap</a>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.6rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+            <button type="button" id="btnSyncGoogleSheets" class="btn btn-secondary btn-sm">
+              🔄 Tarik Data dari Google Sheet
+            </button>
+            <button type="button" id="btnUploadToGoogleSheets" class="btn btn-secondary btn-sm">
+              📤 Upload Data Lokal ke Google Sheet
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="settingAdminPhone">Nomor WhatsApp Admin (Penerima Konfirmasi)</label>
+            <input type="text" id="settingAdminPhone" class="form-input" placeholder="Contoh: 082298025436 atau 6282298025436">
+            <div class="form-helper">Nomor ini menjadi tujuan pesan otomatis saat pembeli menekan tombol 'Chat Admin WhatsApp'.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="settingTargetUnits">Target Total Unit Take All</label>
+            <input type="number" id="settingTargetUnits" class="form-input" value="300" min="1">
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-card">
+              <input type="checkbox" id="settingUseBaseOffset" checked>
+              <div>
+                <strong style="color: #ffffff; font-size: 0.9rem;">Sinkronkan Baseline Rekap (137 Pemesan / 168 Unit)</strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                  Aktifkan ini jika 127 pemesan awal lainnya belum sempat dimasukkan ke tabel, sehingga counter atas tetap presisi menampilkan 168 / 300 unit. Matikan jika seluruh data sudah diimpor ke tabel.
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 1.25rem 0;">
+
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <label class="form-label" style="margin-bottom: 0;">Kode Google Apps Script (Siap Pakai):</label>
+              <button type="button" id="btnCopyGasScript" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                📋 Salin Kode Script
+              </button>
+            </div>
+            <div id="gasScriptCode" class="code-box">const SHEET_NAME = 'Data_PO';
+
+function getOrCreateSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(['ID', 'Timestamp', 'Nama Pemesan', 'No. WhatsApp / HP', 'Alamat / Kota', 'Luar Kota', 'Jumlah Unit', 'Catatan / Request', 'Status Bayar', 'Total Biaya (Rp)']);
+    sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#10b981').setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function doGet(e) {
+  try {
+    const action = (e.parameter &amp;&amp; e.parameter.action) || 'getAll';
+    if (action === 'getAll') {
+      const sheet = getOrCreateSheet();
+      const rows = sheet.getDataRange().getValues();
+      if (rows.length &lt;= 1) return createResponse({ status: 'success', count: 0, data: [] });
+      const data = [];
+      for (let i = 1; i &lt; rows.length; i++) {
+        const row = rows[i];
+        if (!row[0] &amp;&amp; !row[2]) continue;
+        data.push({
+          id: String(row[0] || ''),
+          timestamp: row[1] ? Utilities.formatDate(new Date(row[1]), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss') : '',
+          nama: String(row[2] || ''),
+          noHp: String(row[3] || ''),
+          alamat: String(row[4] || ''),
+          luarKota: row[5] === true || String(row[5]).toLowerCase() === 'ya' || String(row[5]).toLowerCase() === 'true',
+          jumlahUnit: Number(row[6]) || 1,
+          catatan: String(row[7] || ''),
+          statusBayar: String(row[8] || 'Belum Bayar'),
+          totalBiaya: Number(row[9]) || 0
+        });
+      }
+      return createResponse({ status: 'success', count: data.length, data: data });
+    }
+  } catch(err) {
+    return createResponse({ status: 'error', message: err.toString() });
+  }
+}
+
+function doPost(e) {
+  try {
+    let payload = {};
+    if (e.postData &amp;&amp; e.postData.contents) {
+      try { payload = JSON.parse(e.postData.contents); } catch(pErr) { payload = e.parameter; }
+    } else { payload = e.parameter; }
+    const action = payload.action || 'add';
+    const sheet = getOrCreateSheet();
+    if (action === 'add') {
+      const id = payload.id || 'PO-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss');
+      sheet.appendRow([id, new Date(), payload.nama, payload.noHp, payload.alamat, payload.luarKota ? 'Ya' : 'Tidak', Number(payload.jumlahUnit)||1, payload.catatan||'', payload.statusBayar||'Belum Bayar', Number(payload.totalBiaya)||0]);
+      return createResponse({ status: 'success', message: 'Tersimpan' });
+    } else if (action === 'updateStatus') {
+      const rows = sheet.getDataRange().getValues();
+      for (let i = 1; i &lt; rows.length; i++) {
+        if (String(rows[i][0]) === String(payload.id)) {
+          sheet.getRange(i + 1, 9).setValue(payload.statusBayar);
+          return createResponse({ status: 'success' });
+        }
+      }
+    } else if (action === 'delete') {
+      const rows = sheet.getDataRange().getValues();
+      for (let i = 1; i &lt; rows.length; i++) {
+        if (String(rows[i][0]) === String(payload.id)) {
+          sheet.deleteRow(i + 1);
+          return createResponse({ status: 'success' });
+        }
+      }
+    }
+    return createResponse({ status: 'error', message: 'Aksi tidak dikenal' });
+  } catch(err) {
+    return createResponse({ status: 'error', message: err.toString() });
+  }
+}
+
+function createResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-modal-cancel">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Batch / Text Importer -->
+  <div id="importModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3><span>📋</span> Impor Teks Daftar Pemesan</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Tempelkan daftar teks pemesan dengan format seperti di WhatsApp/catatan Anda. 
+          Sistem akan otomatis mengenali Nama, Kota, Nomor HP, dan Jumlah Unit!
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="batchImportText">Contoh Format yang Didukung:</label>
+          <textarea id="batchImportText" class="form-textarea mono" style="min-height: 140px;" placeholder="11. Alex — Bandung — 08123456789 — 2 unit&#10;12. Dimas — Solo — 0899887766 — 1 unit, putih&#10;13. Joko — Surabaya — 0855443322 — 3 unit"></textarea>
+        </div>
+
+        <div style="font-size: 0.78rem; color: var(--text-dim);">
+          Tip: Sistem dapat membaca pemisah berupa strip (—), garis (|), koma (,), atau spasi.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button type="button" id="btnSubmitImport" class="btn btn-primary">
+          <span>📥</span> Proses & Tambahkan ke Tabel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Admin Login -->
+  <div id="adminLoginModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3><span>🛡️</span> Masuk Mode Admin</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <form id="adminLoginForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="adminPinInput">Masukkan PIN / Sandi Admin</label>
+            <input type="password" id="adminPinInput" class="form-input" placeholder="Default PIN: admin123" required autofocus>
+            <div class="form-helper">Mode admin mengizinkan Anda mengubah status bayar (Lunas/DP) dan menghapus pesanan.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-modal-cancel">Batal</button>
+          <button type="submit" class="btn btn-primary">Buka Kunci Admin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Core JavaScript -->
+  <script src="js/app.js"></script>
+</body>
+</html>
