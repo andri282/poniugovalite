@@ -69,6 +69,23 @@ Dibuat khusus agar dapat di-host secara gratis di **GitHub Pages** dengan databa
 
 ## 📊 Cara Menghubungkan Google Sheets
 
+### Struktur Kolom Spreadsheet (Tab: `Data_PO`)
+
+| Kolom | Header | Tipe Data | Keterangan & Contoh |
+| :---: | :--- | :--- | :--- |
+| **A** | `ID` | Teks | Kode pesanan unik (contoh: `PO-20261030-001`) |
+| **B** | `Timestamp` | Tanggal/Waktu | Waktu pendaftaran (contoh: `2026-10-30 10:15:00`) |
+| **C** | `Nama Pemesan` | Teks | Nama lengkap (contoh: `Fikri`) |
+| **D** | `No. WhatsApp / HP` | Teks | Nomor HP/WA (contoh: `082298025436`) |
+| **E** | `Alamat / Kota` | Teks | Kota tujuan (contoh: `Bekasi`) |
+| **F** | `Luar Kota` | Teks | `Ya` (+Rp 50.000/unit) atau `Tidak` |
+| **G** | `Jumlah Unit` | Angka | Jumlah motor yang dipesan (contoh: `5`) |
+| **H** | `Catatan / Request` | Teks | Catatan khusus (contoh: `warna putih`) |
+| **I** | `Status Bayar` | Teks | `Belum Bayar`, `DP`, atau `Lunas` |
+| **J** | `Total Biaya (Rp)` | Angka | Total tagihan rupiah (contoh: `14250000`) |
+
+> **Catatan Praktis**: Jika Anda membuat spreadsheet baru dan membiarkannya kosong, script backend akan **otomatis membuatkan nama tab `Data_PO` dan seluruh 10 judul kolom di atas** saat data pertama kali dikirimkan!
+
 Silakan ikuti panduan lengkap langkah demi langkah di file:
 👉 **[TUTORIAL_SETUP_GOOGLE_SHEETS.md](./TUTORIAL_SETUP_GOOGLE_SHEETS.md)**
 

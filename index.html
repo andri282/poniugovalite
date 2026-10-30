@@ -479,7 +479,15 @@ function getOrCreateSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
+    const allSheets = ss.getSheets();
+    if (allSheets.length === 1 && allSheets[0].getLastRow() <= 1 && allSheets[0].getLastColumn() <= 1) {
+      sheet = allSheets[0];
+      sheet.setName(SHEET_NAME);
+    } else {
+      sheet = ss.insertSheet(SHEET_NAME);
+    }
+  }
+  if (sheet.getLastRow() === 0) {
     sheet.appendRow(['ID', 'Timestamp', 'Nama Pemesan', 'No. WhatsApp / HP', 'Alamat / Kota', 'Luar Kota', 'Jumlah Unit', 'Catatan / Request', 'Status Bayar', 'Total Biaya (Rp)']);
     sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#10b981').setFontColor('#ffffff');
     sheet.setFrozenRows(1);
