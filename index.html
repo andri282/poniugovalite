@@ -22,21 +22,12 @@
       </a>
 
       <div class="nav-actions">
-        <div id="syncStatusBtn" class="sync-indicator" title="Status Sinkronisasi Google Sheets">
-          <span id="syncDot" class="sync-dot offline"></span>
-          <span id="syncText">Memeriksa Database...</span>
-        </div>
-
         <button id="btnOpenOrderModal" class="btn btn-primary">
           <span>➕</span> Ikut PO Sekarang
         </button>
 
         <button id="btnShareWA" class="btn btn-outline-wa" title="Salin Rekap untuk WhatsApp Group">
           <span>📲</span> Salin Rekap WA
-        </button>
-
-        <button id="btnOpenSettings" class="btn btn-secondary btn-icon-only" title="Pengaturan & Google Sheets">
-          ⚙️
         </button>
 
         <button id="btnOpenAdmin" class="btn btn-secondary btn-icon-only" title="Mode Admin">
@@ -414,166 +405,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Settings & Google Sheets Sync -->
-  <div id="settingsModal" class="modal-overlay">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-header">
-        <h3><span>⚙️</span> Pengaturan & Integrasi Google Sheets</h3>
-        <button class="modal-close">&times;</button>
-      </div>
-      <form id="settingsForm">
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label" for="settingGasUrl">URL Google Apps Script (Web App /exec) <span class="required">*</span></label>
-            <input type="url" id="settingGasUrl" class="form-input mono" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-            <div class="form-helper">
-              Hubungkan ke Google Sheets Anda agar data tersimpan aman secara gratis di cloud Google. 
-              <a href="TUTORIAL_SETUP_GOOGLE_SHEETS.md" target="_blank" style="color: var(--primary); text-decoration: underline;">Baca Panduan Lengkap</a>
-            </div>
-          </div>
 
-          <div style="display: flex; gap: 0.6rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-            <button type="button" id="btnSyncGoogleSheets" class="btn btn-secondary btn-sm">
-              🔄 Tarik Data dari Google Sheet
-            </button>
-            <button type="button" id="btnUploadToGoogleSheets" class="btn btn-secondary btn-sm">
-              📤 Upload Data Lokal ke Google Sheet
-            </button>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="settingAdminPhone">Nomor WhatsApp Admin (Penerima Konfirmasi)</label>
-            <input type="text" id="settingAdminPhone" class="form-input" placeholder="Contoh: 082298025436 atau 6282298025436">
-            <div class="form-helper">Nomor ini menjadi tujuan pesan otomatis saat pembeli menekan tombol 'Chat Admin WhatsApp'.</div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="settingTargetUnits">Target Total Unit Take All</label>
-            <input type="number" id="settingTargetUnits" class="form-input" value="300" min="1">
-          </div>
-
-          <div class="form-group">
-            <label class="checkbox-card">
-              <input type="checkbox" id="settingUseBaseOffset" checked>
-              <div>
-                <strong style="color: #ffffff; font-size: 0.9rem;">Sinkronkan Baseline Rekap (137 Pemesan / 168 Unit)</strong>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">
-                  Aktifkan ini jika 127 pemesan awal lainnya belum sempat dimasukkan ke tabel, sehingga counter atas tetap presisi menampilkan 168 / 300 unit. Matikan jika seluruh data sudah diimpor ke tabel.
-                </div>
-              </div>
-            </label>
-          </div>
-
-          <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 1.25rem 0;">
-
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <label class="form-label" style="margin-bottom: 0;">Kode Google Apps Script (Siap Pakai):</label>
-              <button type="button" id="btnCopyGasScript" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
-                📋 Salin Kode Script
-              </button>
-            </div>
-            <div id="gasScriptCode" class="code-box">const SHEET_NAME = 'Data_PO';
-
-function getOrCreateSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    const allSheets = ss.getSheets();
-    if (allSheets.length === 1 && allSheets[0].getLastRow() <= 1 && allSheets[0].getLastColumn() <= 1) {
-      sheet = allSheets[0];
-      sheet.setName(SHEET_NAME);
-    } else {
-      sheet = ss.insertSheet(SHEET_NAME);
-    }
-  }
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['ID', 'Timestamp', 'Nama Pemesan', 'No. WhatsApp / HP', 'Alamat / Kota', 'Luar Kota', 'Jumlah Unit', 'Catatan / Request', 'Status Bayar', 'Total Biaya (Rp)']);
-    sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#10b981').setFontColor('#ffffff');
-    sheet.setFrozenRows(1);
-  }
-  return sheet;
-}
-
-function doGet(e) {
-  try {
-    const action = (e.parameter &amp;&amp; e.parameter.action) || 'getAll';
-    if (action === 'getAll') {
-      const sheet = getOrCreateSheet();
-      const rows = sheet.getDataRange().getValues();
-      if (rows.length &lt;= 1) return createResponse({ status: 'success', count: 0, data: [] });
-      const data = [];
-      for (let i = 1; i &lt; rows.length; i++) {
-        const row = rows[i];
-        if (!row[0] &amp;&amp; !row[2]) continue;
-        data.push({
-          id: String(row[0] || ''),
-          timestamp: row[1] ? Utilities.formatDate(new Date(row[1]), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss') : '',
-          nama: String(row[2] || ''),
-          noHp: String(row[3] || ''),
-          alamat: String(row[4] || ''),
-          luarKota: row[5] === true || String(row[5]).toLowerCase() === 'ya' || String(row[5]).toLowerCase() === 'true',
-          jumlahUnit: Number(row[6]) || 1,
-          catatan: String(row[7] || ''),
-          statusBayar: String(row[8] || 'Belum Bayar'),
-          totalBiaya: Number(row[9]) || 0
-        });
-      }
-      return createResponse({ status: 'success', count: data.length, data: data });
-    }
-  } catch(err) {
-    return createResponse({ status: 'error', message: err.toString() });
-  }
-}
-
-function doPost(e) {
-  try {
-    let payload = {};
-    if (e.postData &amp;&amp; e.postData.contents) {
-      try { payload = JSON.parse(e.postData.contents); } catch(pErr) { payload = e.parameter; }
-    } else { payload = e.parameter; }
-    const action = payload.action || 'add';
-    const sheet = getOrCreateSheet();
-    if (action === 'add') {
-      const id = payload.id || 'PO-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss');
-      sheet.appendRow([id, new Date(), payload.nama, payload.noHp, payload.alamat, payload.luarKota ? 'Ya' : 'Tidak', Number(payload.jumlahUnit)||1, payload.catatan||'', payload.statusBayar||'Belum Bayar', Number(payload.totalBiaya)||0]);
-      return createResponse({ status: 'success', message: 'Tersimpan' });
-    } else if (action === 'updateStatus') {
-      const rows = sheet.getDataRange().getValues();
-      for (let i = 1; i &lt; rows.length; i++) {
-        if (String(rows[i][0]) === String(payload.id)) {
-          sheet.getRange(i + 1, 9).setValue(payload.statusBayar);
-          return createResponse({ status: 'success' });
-        }
-      }
-    } else if (action === 'delete') {
-      const rows = sheet.getDataRange().getValues();
-      for (let i = 1; i &lt; rows.length; i++) {
-        if (String(rows[i][0]) === String(payload.id)) {
-          sheet.deleteRow(i + 1);
-          return createResponse({ status: 'success' });
-        }
-      }
-    }
-    return createResponse({ status: 'error', message: 'Aksi tidak dikenal' });
-  } catch(err) {
-    return createResponse({ status: 'error', message: err.toString() });
-  }
-}
-
-function createResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
-}</div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-modal-cancel">Batal</button>
-          <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- MODAL: Batch / Text Importer -->
   <div id="importModal" class="modal-overlay">
